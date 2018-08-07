@@ -1,0 +1,39 @@
+{
+  "name": "puppeteer-informer",
+  "version": "0.0.1",
+  "description": "Puppeteer Informer is a Node library which provides a way to scrape or parse information from any website using Chrome or Chromium",
+  "main": "index.js",
+  "engines": {
+    "node": ">=8.x.x"
+  },
+  "scripts": {
+    "patch": "npm version patch -m \"Bumped up package version to %s\" && git push && git push origin --tags && npm publish",
+    "minor": "npm version minor -m \"Bumped up package version to %s\" && git push && git push origin --tags && npm publish",
+    "major": "npm version major -m \"Bumped up package version to %s\" && git push && git push origin --tags && npm publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Marketionist/puppeteer-informer"
+  },
+  "keywords": [
+    "puppeteer informer",
+    "puppeteer-informer",
+    "parser",
+    "web parser",
+    "website parser",
+    "information parser",
+    "scraper",
+    "web scraper",
+    "website scraper",
+    "information scraper",
+    "testing",
+    "automated tests",
+    "e2e tests",
+    "end-to-end tests"
+  ],
+  "author": "Dmytro Shpakovskyi",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^1.6.2"
+  }
+}
