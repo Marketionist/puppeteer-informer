@@ -5,7 +5,7 @@ const url = process.argv[2];
 const output = process.argv[3];
 
 if (!url) {
-    throw `Please provide URL as a first argument - for example
+    throw `Please provide URL as a first argument and "png" or "pdf" as a second (optional) argument - for example
         \"node index.js https://www.accuweather.com/en/nl/amsterdam/249758/daily-weather-forecast/249758 png\"`;
 }
 
