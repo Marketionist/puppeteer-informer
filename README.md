@@ -16,7 +16,12 @@ Puppeteer Informer is a Node.js script which provides a way to scrape informatio
 `npm install`
 
 ## Usage
-`node index.js https://www.accuweather.com/en/nl/amsterdam/249758/daily-weather-forecast/249758 png`
+Just run in terminal:
+
+```
+node index.js https://www.accuweather.com/en/nl/amsterdam/249758/daily-weather-forecast/249758 png
+```
+
 Where:
 - the 2nd argument is mandatory - it should be a URL (for example from accuweather.com) to parse
 - the 3rd argument is optional - it can be `png` or `pdf` to save a screenshot of the page in provided format

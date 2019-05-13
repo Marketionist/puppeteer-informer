@@ -5,7 +5,7 @@ const url = process.argv[2];
 const output = process.argv[3];
 
 if (!url) {
-    throw `Please provide URL as a first argument - for example
+    throw `Please provide URL as a first argument and "png" or "pdf" as a second (optional) argument - for example
         \"node index.js https://www.accuweather.com/en/nl/amsterdam/249758/daily-weather-forecast/249758 png\"`;
 }
 
@@ -58,6 +58,13 @@ async function makePDF (page) {
     await page.pdf({ path: 'page-print.pdf', printBackground: true, format: 'A4' });
 }
 
+async function waitForVisible (page, element) {
+    // Wait until element is displayed and "visibility" not hidden
+    await page.waitForFunction((selector) => { return (document.querySelector(selector) &&
+        document.querySelector(selector).clientHeight !== 0 &&
+        document.querySelector(selector).style.visibility !== 'hidden') }, {}, element);
+}
+
 async function navigateToPage () {
     // Browser Display Statistics: https://www.w3schools.com/browsers/browsers_display.asp
     // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.14.0/docs/api.md#puppeteerlaunchoptions):
@@ -66,12 +73,22 @@ async function navigateToPage () {
     const browser = await puppeteer.launch({ headless: true, defaultViewport: { width: 1366, height: 768 } });
     const page = await browser.newPage();
     const buttonCookieContinue = '#eu-cookie-notify-wrap .continue';
+    const blockSettings = '#bt-menu-settings';
+    const blockCelsius = '[for=\"settings-temp-unit-celsius\"]';
 
     // Go to the page and wait for it to load
     // Options:
     // waitUntil: 'networkidle0'
+    // waitUntil: 'domcontentloaded'
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 40000 });
     await page.click(buttonCookieContinue);
+    // Set temperature unit to Celsius
+    await page.click(blockSettings);
+    // Wait until displayed and "visibility" not hidden
+    await waitForVisible(page, blockCelsius);
+    await page.click(blockCelsius);
+
+    await page.reload(url);
 
     // await page.type('#s', process.env.CITY);
     // await page.click('.city-suggestion');

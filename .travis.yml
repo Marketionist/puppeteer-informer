@@ -17,4 +17,5 @@ install:
 script:
   - node index.js https://www.accuweather.com/en/gr/heraklion/2282907/daily-weather-forecast/2282907 png
   - node index.js https://www.accuweather.com/en/cy/paphos/124968/daily-weather-forecast/124968 pdf
+  - node index.js https://www.accuweather.com/en/me/budva/297392/daily-weather-forecast/297392 png
   - ls -lah
