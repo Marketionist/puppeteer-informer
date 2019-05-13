@@ -66,12 +66,17 @@ async function navigateToPage () {
     const browser = await puppeteer.launch({ headless: true, defaultViewport: { width: 1366, height: 768 } });
     const page = await browser.newPage();
     const buttonCookieContinue = '#eu-cookie-notify-wrap .continue';
+    const blockSettings = '#bt-menu-settings';
+    const blockCelsius = '[for="settings-temp-unit-celsius"]';
 
     // Go to the page and wait for it to load
     // Options:
     // waitUntil: 'networkidle0'
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 40000 });
     await page.click(buttonCookieContinue);
+    // Set temperature unit to Celsius
+    await page.click(blockSettings);
+    await page.click(blockCelsius);
 
     // await page.type('#s', process.env.CITY);
     // await page.click('.city-suggestion');
