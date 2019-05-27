@@ -1,13 +1,31 @@
+'use strict';
+
 const puppeteer = require('puppeteer');
 
-const url = process.argv[2];
+const inputArguments = process.argv.slice(2);
 
-const output = process.argv[3];
+let listCities;
 
-if (!url) {
-    throw `Please provide URL as a first argument and "png" or "pdf" as a second (optional) argument - for example
-        \"CITY='Amsterdam' node index.js https://www.accuweather.com/en/europe-weather png\"`;
-}
+// Check if --yes flag is provided to use default array of cities
+if (inputArguments.includes('--yes')) {
+    listCities = ['Heraklion', 'Budva', 'Paphos', 'Amsterdam'];
+
+    // Check if process.env.CITY parameter with array of cities is set
+    if (process.env.CITY) {
+        listCities = process.env.CITY.split(',').map((value) => {
+            return value.trim();
+        });
+    }
+};
+
+// Check at what index the URL is provided
+let indexInputURL = inputArguments.map((value) => { return value.match(/^http/gi); })
+    .findIndex((value) => { return value == "http"; } );
+
+const extensionOutput = inputArguments[indexInputURL + 1];
+
+console.log(`\n====\ninputArguments: ${inputArguments}\nlistCities: ${listCities}\n` +
+    `extensionOutput: ${extensionOutput}\n====\n`);
 
 async function clear (page, element) {
     // await page.evaluate(selector => {
@@ -72,7 +90,7 @@ async function scrapePageData (page) {
 async function makeScreenshot (page) {
     let timestamp = new Date().getTime();
 
-    // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.14.0/docs/api.md#pagescreenshotoptions):
+    // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.17.0/docs/api.md#pagescreenshotoptions):
     // fullPage: true
     await page.screenshot({ path: `screenshot-${timestamp}.png`, clip: { x: 0, y: 0, width: 608, height: 624 } });
 }
@@ -80,7 +98,7 @@ async function makeScreenshot (page) {
 async function makePDF (page) {
     let timestamp = new Date().getTime();
 
-    // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.14.0/docs/api.md#pagepdfoptions)
+    // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.17.0/docs/api.md#pagepdfoptions)
     await page.pdf({ path: `screenshotprint-${timestamp}.pdf`, printBackground: true, format: 'A4' });
 }
 
@@ -90,7 +108,7 @@ async function parseWeather (url) {
     // headless: false - run full (non-headless) Chrome or Chromium
     // slowMo: 250 - slows down the exectution of each command in browser for 250ms
     const options = {
-        headless: false,
+        headless: !process.env.HEADLESS,
         defaultViewport: { width: 1366, height: 768 }
     }
 
@@ -125,7 +143,7 @@ async function parseWeather (url) {
 
     await page.click(inputSearch);
     await clear(page, inputSearch);
-    await page.type(inputSearch, process.env.CITY);
+    await page.type(inputSearch, listCities[0]);
     await page.click(buttonGo);
 
     await page.reload(url);
@@ -147,7 +165,7 @@ async function parseWeather (url) {
     }, blockFirstCity);
 
     if (txtFirstCity) {
-        console.log(`Several cities match the search input - ${txtFirstCity} will be selected`);
+        console.log(`\nSeveral cities match the search input - ${txtFirstCity} will be selected\n`);
         await page.click(blockFirstCity);
     }
 
@@ -157,13 +175,24 @@ async function parseWeather (url) {
 
     await scrapePageData(page);
 
-    if (output === 'png') {
+    if (extensionOutput === 'png') {
         await makeScreenshot(page);
-    } else if (output === 'pdf') {
+    } else if (extensionOutput === 'pdf') {
         await makePDF(page);
+    } else {
+        console.info('\nSecond (optional) argument was not "png" or "pdf" or was not provided\n');
     }
 
     await browser.close();
 }
 
-parseWeather(url);
+if (indexInputURL !== -1) {
+    const url = inputArguments[indexInputURL];
+
+    console.log('url: ', url);
+
+    parseWeather(url);
+} else {
+    throw new Error(`Please provide URL as a first argument and "png" or "pdf" as a second (optional) argument -
+        for example: \"node index.js https://www.accuweather.com/en/europe-weather png\"`);
+}
