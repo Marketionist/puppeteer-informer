@@ -89,7 +89,11 @@ async function parseWeather (url) {
     // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.14.0/docs/api.md#puppeteerlaunchoptions):
     // headless: false - run full (non-headless) Chrome or Chromium
     // slowMo: 250 - slows down the exectution of each command in browser for 250ms
-    const browser = await puppeteer.launch({ headless: true, defaultViewport: { width: 1366, height: 768 }});
+    const browser = await puppeteer.launch({
+        headless: true,
+        defaultViewport: { width: 1366, height: 768 },
+        args: ['--disable-infobars']
+    });
     const page = await browser.newPage();
     const buttonCookieContinue = '#eu-cookie-notify-wrap .continue';
     const blockSettings = '#bt-menu-settings';
