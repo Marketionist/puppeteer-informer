@@ -15,7 +15,8 @@ install:
 
 # http://docs.travis-ci.com/user/pull-requests/
 script:
-  - node index.js https://www.accuweather.com/en/gr/heraklion/2282907/daily-weather-forecast/2282907 png
-  - node index.js https://www.accuweather.com/en/cy/paphos/124968/daily-weather-forecast/124968 pdf
-  - node index.js https://www.accuweather.com/en/me/budva/297392/daily-weather-forecast/297392 png
+  - CITY='Heraklion' node index.js https://www.accuweather.com/en/europe-weather png
+  - CITY='Budva' node index.js https://www.accuweather.com/en/europe-weather pdf
+  - CITY='Paphos' node index.js https://www.accuweather.com/en/europe-weather png
+  - CITY='Amsterdam' node index.js https://www.accuweather.com/en/europe-weather pdf
   - ls -lah

@@ -6,7 +6,29 @@ const output = process.argv[3];
 
 if (!url) {
     throw `Please provide URL as a first argument and "png" or "pdf" as a second (optional) argument - for example
-        \"node index.js https://www.accuweather.com/en/nl/amsterdam/249758/daily-weather-forecast/249758 png\"`;
+        \"CITY='Amsterdam' node index.js https://www.accuweather.com/en/europe-weather png\"`;
+}
+
+async function clear (page, element) {
+    // await page.evaluate(selector => {
+    //     document.querySelector(selector).value = "";
+    // }, selector);
+    const inputValueLength = await page.evaluate((selector) => {
+        return (document.querySelector(selector).value.length);
+    }, element);
+
+    for (let i = 0; i < inputValueLength; i++) {
+        await page.keyboard.press('Backspace');
+    }
+}
+
+async function waitForVisible (page, element) {
+    // Wait until element is displayed and "visibility" not hidden
+    await page.waitForFunction((selector) => {
+        return (document.querySelector(selector) &&
+            document.querySelector(selector).clientHeight !== 0 &&
+            document.querySelector(selector).style.visibility !== 'hidden')
+    }, {}, element);
 }
 
 async function scrapePageData (page) {
@@ -48,33 +70,38 @@ async function scrapePageData (page) {
 }
 
 async function makeScreenshot (page) {
+    let timestamp = new Date().getTime();
+
     // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.14.0/docs/api.md#pagescreenshotoptions):
     // fullPage: true
-    await page.screenshot({ path: 'screenshot.png', clip: { x: 0, y: 0, width: 608, height: 624 } });
+    await page.screenshot({ path: `screenshot-${timestamp}.png`, clip: { x: 0, y: 0, width: 608, height: 624 } });
 }
 
 async function makePDF (page) {
+    let timestamp = new Date().getTime();
+
     // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.14.0/docs/api.md#pagepdfoptions)
-    await page.pdf({ path: 'page-print.pdf', printBackground: true, format: 'A4' });
+    await page.pdf({ path: `screenshotprint-${timestamp}.pdf`, printBackground: true, format: 'A4' });
 }
 
-async function waitForVisible (page, element) {
-    // Wait until element is displayed and "visibility" not hidden
-    await page.waitForFunction((selector) => { return (document.querySelector(selector) &&
-        document.querySelector(selector).clientHeight !== 0 &&
-        document.querySelector(selector).style.visibility !== 'hidden') }, {}, element);
-}
-
-async function navigateToPage () {
+async function parseWeather (url) {
     // Browser Display Statistics: https://www.w3schools.com/browsers/browsers_display.asp
     // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.14.0/docs/api.md#puppeteerlaunchoptions):
     // headless: false - run full (non-headless) Chrome or Chromium
     // slowMo: 250 - slows down the exectution of each command in browser for 250ms
-    const browser = await puppeteer.launch({ headless: true, defaultViewport: { width: 1366, height: 768 } });
+    const browser = await puppeteer.launch({
+        headless: true,
+        defaultViewport: { width: 1366, height: 768 },
+        args: ['--disable-infobars']
+    });
     const page = await browser.newPage();
     const buttonCookieContinue = '#eu-cookie-notify-wrap .continue';
     const blockSettings = '#bt-menu-settings';
     const blockCelsius = '[for=\"settings-temp-unit-celsius\"]';
+    const inputSearch = '#s';
+    const buttonGo = '.bt-go';
+    const blockFirstCity = '.results-list .articles > li:first-child';
+    const linkExtended = '[data-label=\"fcst_nav_forecast_extended\"]';
 
     // Go to the page and wait for it to load
     // Options:
@@ -90,9 +117,37 @@ async function navigateToPage () {
 
     await page.reload(url);
 
-    // await page.type('#s', process.env.CITY);
-    // await page.click('.city-suggestion');
-    // await page.click('.bt-go');
+    await page.click(inputSearch);
+    await clear(page, inputSearch);
+    await page.type(inputSearch, process.env.CITY);
+    await page.click(buttonGo);
+
+    await page.reload(url);
+
+    // // Selector with two elements, one for each possible path, with something like:
+    // await page.waitFor('.current-city > h1,.results-list .articles > li:first-child');
+
+    let txtFirstCity = await page.evaluate(async (selectorCity) => {
+        let linkFirstCity = await document.querySelector(selectorCity);
+        let result = null;
+
+        if (linkFirstCity) {
+            result = linkFirstCity.innerText.trim();
+        }
+
+        return result;
+    }, blockFirstCity);
+
+    if (txtFirstCity) {
+        console.log(`Several cities match the search input - ${txtFirstCity} will be selected`);
+        await page.click(blockFirstCity);
+    }
+
+    await page.reload(url);
+
+    await page.click(linkExtended);
+
+    await page.reload(url);
 
     await scrapePageData(page);
 
@@ -105,4 +160,4 @@ async function navigateToPage () {
     await browser.close();
 }
 
-navigateToPage();
+parseWeather(url);
