@@ -86,13 +86,18 @@ async function makePDF (page) {
 
 async function parseWeather (url) {
     // Browser Display Statistics: https://www.w3schools.com/browsers/browsers_display.asp
-    // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.14.0/docs/api.md#puppeteerlaunchoptions):
+    // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.17.0/docs/api.md#puppeteerlaunchoptions):
     // headless: false - run full (non-headless) Chrome or Chromium
     // slowMo: 250 - slows down the exectution of each command in browser for 250ms
+    const options = {
+        headless: false,
+        defaultViewport: { width: 1366, height: 768 }
+    }
+
     const browser = await puppeteer.launch({
-        headless: true,
-        defaultViewport: { width: 1366, height: 768 },
-        args: ['--disable-infobars']
+        ...options,
+        args: ['--disable-infobars'],
+        ignoreDefaultArgs: ['--enable-automation']
     });
     const page = await browser.newPage();
     const buttonCookieContinue = '#eu-cookie-notify-wrap .continue';
@@ -100,6 +105,7 @@ async function parseWeather (url) {
     const blockCelsius = '[for=\"settings-temp-unit-celsius\"]';
     const inputSearch = '#s';
     const buttonGo = '.bt-go';
+    const blockCurrentCity = '.current-city > h1';
     const blockFirstCity = '.results-list .articles > li:first-child';
     const linkExtended = '[data-label=\"fcst_nav_forecast_extended\"]';
 
@@ -124,8 +130,10 @@ async function parseWeather (url) {
 
     await page.reload(url);
 
-    // // Selector with two elements, one for each possible path, with something like:
-    // await page.waitFor('.current-city > h1,.results-list .articles > li:first-child');
+    // Wait for any of two selectors, one for each possible path:
+    await page.waitForFunction((selector) => {
+        return document.querySelectorAll(selector).length;
+    }, { timeout: 10000 }, `${blockCurrentCity}, ${blockFirstCity}`);
 
     let txtFirstCity = await page.evaluate(async (selectorCity) => {
         let linkFirstCity = await document.querySelector(selectorCity);
@@ -143,11 +151,9 @@ async function parseWeather (url) {
         await page.click(blockFirstCity);
     }
 
-    await page.reload(url);
-
+    await waitForVisible(page, linkExtended);
     await page.click(linkExtended);
-
-    await page.reload(url);
+    await waitForVisible(page, blockCurrentCity);
 
     await scrapePageData(page);
 
