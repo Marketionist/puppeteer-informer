@@ -1,6 +1,7 @@
 'use strict';
 
 const puppeteer = require('puppeteer');
+const { clear, waitForVisible, waitForElements, makeScreenshot, makePDF } = require('./utils/helpers.js');
 
 const inputArguments = process.argv.slice(2);
 
@@ -8,7 +9,7 @@ let listCities;
 
 // Check if --yes flag is provided to use default array of cities
 if (inputArguments.includes('--yes')) {
-    listCities = ['Heraklion', 'Budva', 'Paphos', 'Amsterdam'];
+    listCities = ['Málaga', 'Heraklion', 'Budva', 'Paphos', 'Amsterdam'];
 
     // Check if process.env.CITY parameter with array of cities is set
     if (process.env.CITY) {
@@ -27,82 +28,10 @@ const extensionOutput = inputArguments[indexInputURL + 1];
 console.log(`\n====\ninputArguments: ${inputArguments}\nlistCities: ${listCities}\n` +
     `extensionOutput: ${extensionOutput}\n====\n`);
 
-async function clear (page, element) {
-    // await page.evaluate(selector => {
-    //     document.querySelector(selector).value = "";
-    // }, selector);
-    const inputValueLength = await page.evaluate((selector) => {
-        return (document.querySelector(selector).value.length);
-    }, element);
-
-    for (let i = 0; i < inputValueLength; i++) {
-        await page.keyboard.press('Backspace');
-    }
-}
-
-async function waitForVisible (page, element) {
-    // Wait until element is displayed and "visibility" not hidden
-    await page.waitForFunction((selector) => {
-        return (document.querySelector(selector) &&
-            document.querySelector(selector).clientHeight !== 0 &&
-            document.querySelector(selector).style.visibility !== 'hidden')
-    }, {}, element);
-}
-
-async function scrapePageData (page) {
-    // Run javascript inside the page
-    let data = await page.evaluate(() => {
-        const blockTempToday = '.fday1';
-        const blockTempTomorrow = '.fday2';
-
-        let txtCitySelected = document.querySelector('.current-city > h1').innerText;
-
-        let txtDateToday = document.querySelector(`${blockTempToday} h4`).innerText;
-        let txtTemperatureToday = document.querySelector(`${blockTempToday} .temp`).innerText.replace(/[\n]+/gi, '');
-        let txtConditionsToday = document.querySelector(`${blockTempToday} .cond`).innerText;
-
-        let txtDateTomorrow = document.querySelector(`${blockTempTomorrow} h4`).innerText;
-        let txtTemperatureTomorrow = document.querySelector(`${blockTempTomorrow} .temp`)
-            .innerText.replace(/[\n]+/gi, '');
-        let txtConditionsTomorrow = document.querySelector(`${blockTempTomorrow} .cond`).innerText;
-
-        // Returning an object filled with the scraped data
-        return {
-            txtCitySelected,
-            txtDateToday,
-            txtTemperatureToday,
-            txtConditionsToday,
-            txtDateTomorrow,
-            txtTemperatureTomorrow,
-            txtConditionsTomorrow
-        }
-    });
-
-    // Outputting what was scraped
-    // console.log(JSON.stringify(data, null, 4));
-    console.log(`${data.txtCitySelected} \nToday (${data.txtDateToday}): ${data.txtTemperatureToday}, ` +
-        `${data.txtConditionsToday}\nTomorrow (${data.txtDateTomorrow}): ${data.txtTemperatureTomorrow}, ` +
-        `${data.txtConditionsTomorrow}`);
-
-    return data;
-}
-
-async function makeScreenshot (page) {
-    let timestamp = new Date().getTime();
-
-    // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.17.0/docs/api.md#pagescreenshotoptions):
-    // fullPage: true
-    await page.screenshot({ path: `screenshot-${timestamp}.png`, clip: { x: 0, y: 0, width: 608, height: 624 } });
-}
-
-async function makePDF (page) {
-    let timestamp = new Date().getTime();
-
-    // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.17.0/docs/api.md#pagepdfoptions)
-    await page.pdf({ path: `screenshotprint-${timestamp}.pdf`, printBackground: true, format: 'A4' });
-}
-
 async function parseWeather (url) {
+
+    const accuPage = require('./page_objects/accuweather.page.js');
+
     // Browser Display Statistics: https://www.w3schools.com/browsers/browsers_display.asp
     // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.17.0/docs/api.md#puppeteerlaunchoptions):
     // headless: false - run full (non-headless) Chrome or Chromium
@@ -118,40 +47,42 @@ async function parseWeather (url) {
         ignoreDefaultArgs: ['--enable-automation']
     });
     const page = await browser.newPage();
-    const buttonCookieContinue = '#eu-cookie-notify-wrap .continue';
-    const blockSettings = '#bt-menu-settings';
-    const blockCelsius = '[for=\"settings-temp-unit-celsius\"]';
-    const inputSearch = '#s';
-    const buttonGo = '.bt-go';
-    const blockCurrentCity = '.current-city > h1';
-    const blockFirstCity = '.results-list .articles > li:first-child';
-    const linkExtended = '[data-label=\"fcst_nav_forecast_extended\"]';
+
+    // Only allow requests with the resource types provided in listPermittedResouceTypes to get through,
+    // block all 'image' requests and everything else besides the original HTML response
+    let listPermittedResouceTypes = ['document', 'script', 'stylesheet'];
+    await page.setRequestInterception(true);
+    page.on('request', (request) => {
+        if (listPermittedResouceTypes.includes(request.resourceType())) {
+            request.continue();
+        } else {
+            request.abort();
+        }
+    });
 
     // Go to the page and wait for it to load
     // Options:
     // waitUntil: 'networkidle0'
     // waitUntil: 'domcontentloaded'
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 40000 });
-    await page.click(buttonCookieContinue);
+    await page.click(accuPage.buttonCookieContinue);
     // Set temperature unit to Celsius
-    await page.click(blockSettings);
+    await page.click(accuPage.blockSettings);
     // Wait until displayed and "visibility" not hidden
-    await waitForVisible(page, blockCelsius);
-    await page.click(blockCelsius);
+    await waitForVisible(page, accuPage.blockCelsius);
+    await page.click(accuPage.blockCelsius);
 
     await page.reload(url);
 
-    await page.click(inputSearch);
-    await clear(page, inputSearch);
-    await page.type(inputSearch, listCities[0]);
-    await page.click(buttonGo);
+    await page.click(accuPage.inputSearch);
+    await clear(page, accuPage.inputSearch);
+    await page.type(accuPage.inputSearch, listCities[0]);
+    await page.click(accuPage.buttonGo);
 
     await page.reload(url);
 
-    // Wait for any of two selectors, one for each possible path:
-    await page.waitForFunction((selector) => {
-        return document.querySelectorAll(selector).length;
-    }, { timeout: 10000 }, `${blockCurrentCity}, ${blockFirstCity}`);
+    // Wait for any of two selectors, one for each possible path
+    waitForElements(page, accuPage.blockCurrentCity, accuPage.blockFirstCity);
 
     let txtFirstCity = await page.evaluate(async (selectorCity) => {
         let linkFirstCity = await document.querySelector(selectorCity);
@@ -162,18 +93,18 @@ async function parseWeather (url) {
         }
 
         return result;
-    }, blockFirstCity);
+    }, accuPage.blockFirstCity);
 
     if (txtFirstCity) {
         console.log(`\nSeveral cities match the search input - ${txtFirstCity} will be selected\n`);
-        await page.click(blockFirstCity);
+        await page.click(accuPage.blockFirstCity);
     }
 
-    await waitForVisible(page, linkExtended);
-    await page.click(linkExtended);
-    await waitForVisible(page, blockCurrentCity);
+    await waitForVisible(page, accuPage.linkExtended);
+    await page.click(accuPage.linkExtended);
+    await waitForVisible(page, accuPage.blockCurrentCity);
 
-    await scrapePageData(page);
+    await accuPage.scrapeAccuPageData(page);
 
     if (extensionOutput === 'png') {
         await makeScreenshot(page);
