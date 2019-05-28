@@ -48,6 +48,18 @@ async function parseWeather (url) {
     });
     const page = await browser.newPage();
 
+    // Only allow requests with the resource types provided in listPermittedResouceTypes to get through,
+    // block all 'image' requests and everything else besides the original HTML response
+    let listPermittedResouceTypes = ['document', 'script', 'stylesheet'];
+    await page.setRequestInterception(true);
+    page.on('request', (request) => {
+        if (listPermittedResouceTypes.includes(request.resourceType())) {
+            request.continue();
+        } else {
+            request.abort();
+        }
+    });
+
     // Go to the page and wait for it to load
     // Options:
     // waitUntil: 'networkidle0'
