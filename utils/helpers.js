@@ -2,8 +2,24 @@
 
 let internalFunctions = {
 
-    _createTimestamp: function () {
+    createTimestamp: function () {
         return new Date().getTime();
+    },
+    makeScreenshot: async function (page) {
+        // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.17.0/docs/api.md#pagescreenshotoptions):
+        // fullPage: true
+        await page.screenshot({
+            path: `screenshot-${internalFunctions.createTimestamp()}.png`,
+            clip: { x: 0, y: 0, width: 608, height: 624 }
+        });
+    },
+    makePDF: async function (page) {
+        // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.17.0/docs/api.md#pagepdfoptions)
+        await page.pdf({
+            path: `screenprint-${internalFunctions.createTimestamp()}.pdf`,
+            printBackground: true,
+            format: 'A4'
+        });
     }
 
 }
@@ -36,21 +52,15 @@ module.exports = {
             return !!document.querySelectorAll(selector).length;
         }, { timeout: 10000 }, elements.join(', '));
     },
-    makeScreenshot: async function (page) {
-        // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.17.0/docs/api.md#pagescreenshotoptions):
-        // fullPage: true
-        await page.screenshot({
-            path: `screenshot-${internalFunctions._createTimestamp()}.png`,
-            clip: { x: 0, y: 0, width: 608, height: 624 }
-        });
-    },
-    makePDF: async function (page) {
-        // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.17.0/docs/api.md#pagepdfoptions)
-        await page.pdf({
-            path: `screenshot_print-${internalFunctions._createTimestamp()}.pdf`,
-            printBackground: true,
-            format: 'A4'
-        });
+    captureScreen: async function (page, extensionOutput) {
+        // Create 'png' screenshot or 'pdf' screenprint
+        if (extensionOutput === 'png') {
+            await internalFunctions.makeScreenshot(page);
+        } else if (extensionOutput === 'pdf') {
+            await internalFunctions.makePDF(page);
+        } else {
+            console.info('\nSecond (optional) argument was not "png" or "pdf" or was not provided\n');
+        }
     }
 
 };
