@@ -15,9 +15,7 @@ install:
 
 # http://docs.travis-ci.com/user/pull-requests/
 script:
-  - CITY='Heraklion' node index.js --yes https://www.accuweather.com/en/europe-weather
-  - CITY='Budva' node index.js --yes https://www.accuweather.com/en/europe-weather pdf
-  - CITY='Paphos' node index.js --yes https://www.accuweather.com/en/europe-weather png
-  - CITY='Amsterdam' node index.js --yes https://www.accuweather.com/en/europe-weather pdf
+  - CITY='Larnaca' node index.js --yes https://www.accuweather.com/en/europe-weather
+  - CITY='Marmaris' node index.js --yes https://www.accuweather.com/en/europe-weather pdf
   - node index.js --yes https://www.accuweather.com/en/europe-weather png
   - ls -lah

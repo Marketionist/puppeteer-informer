@@ -49,7 +49,7 @@ module.exports = (function () {
         // console.log(JSON.stringify(data, null, 4));
         console.log(`${data.txtCitySelected} \nToday (${data.txtDateToday}): ${data.txtTemperatureToday}, ` +
             `${data.txtConditionsToday}\nTomorrow (${data.txtDateTomorrow}): ${data.txtTemperatureTomorrow}, ` +
-            `${data.txtConditionsTomorrow}`);
+            `${data.txtConditionsTomorrow}\n====`);
     
         return data;
     };

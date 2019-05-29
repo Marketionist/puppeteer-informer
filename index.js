@@ -1,35 +1,16 @@
 'use strict';
 
 const puppeteer = require('puppeteer');
-const { clear, waitForVisible, waitForElements, makeScreenshot, makePDF } = require('./utils/helpers.js');
+const { clear, waitForVisible, waitForElements, captureScreen } = require('./utils/helpers.js');
+const { cli } = require('./utils/cli.js');
 
-const inputArguments = process.argv.slice(2);
+const WRONG_LIST_OF_CITIES = 'listOfCities should always be an array';
+const ALL_TASKS_FINISHED = '\nAll tasks finished!';
 
-let listCities;
+const widthOfScreenshot = 608;
+const heightOfScreenshot = 624;
 
-// Check if --yes flag is provided to use default array of cities
-if (inputArguments.includes('--yes')) {
-    listCities = ['Málaga', 'Heraklion', 'Budva', 'Paphos', 'Amsterdam'];
-
-    // Check if process.env.CITY parameter with array of cities is set
-    if (process.env.CITY) {
-        listCities = process.env.CITY.split(',').map((value) => {
-            return value.trim();
-        });
-    }
-};
-
-// Check at what index the URL is provided
-let indexInputURL = inputArguments.map((value) => { return value.match(/^http/gi); })
-    .findIndex((value) => { return value == "http"; } );
-
-const extensionOutput = inputArguments[indexInputURL + 1];
-
-console.log(`\n====\ninputArguments: ${inputArguments}\nlistCities: ${listCities}\n` +
-    `extensionOutput: ${extensionOutput}\n====\n`);
-
-async function parseWeather (url) {
-
+async function parseWeather (city, url, extensionOfOutput) {
     const accuPage = require('./page_objects/accuweather.page.js');
 
     // Browser Display Statistics: https://www.w3schools.com/browsers/browsers_display.asp
@@ -76,7 +57,7 @@ async function parseWeather (url) {
 
     await page.click(accuPage.inputSearch);
     await clear(page, accuPage.inputSearch);
-    await page.type(accuPage.inputSearch, listCities[0]);
+    await page.type(accuPage.inputSearch, city);
     await page.click(accuPage.buttonGo);
 
     await page.reload(url);
@@ -106,24 +87,30 @@ async function parseWeather (url) {
 
     await accuPage.scrapeAccuPageData(page);
 
-    if (extensionOutput === 'png') {
-        await makeScreenshot(page);
-    } else if (extensionOutput === 'pdf') {
-        await makePDF(page);
-    } else {
-        console.info('\nSecond (optional) argument was not "png" or "pdf" or was not provided\n');
-    }
+    await captureScreen(page, extensionOfOutput, widthOfScreenshot, heightOfScreenshot);
 
     await browser.close();
+
+    return city;
 }
 
-if (indexInputURL !== -1) {
-    const url = inputArguments[indexInputURL];
+async function launchParserInParallel () {
+    let { listOfCities, URL, extensionOfOutput } = await cli(process.argv);
 
-    console.log('url: ', url);
+    // console.log(`\nArguments in launchParser:\n` +
+    //     `listOfCities: ${listOfCities}\nURL: ${URL}\nextensionOfOutput: ${extensionOfOutput}`);
 
-    parseWeather(url);
-} else {
-    throw new Error(`Please provide URL as a first argument and "png" or "pdf" as a second (optional) argument -
-        for example: \"node index.js https://www.accuweather.com/en/europe-weather png\"`);
+    if (!Array.isArray(listOfCities)) {
+        throw new Error(WRONG_LIST_OF_CITIES);
+    }
+
+    let promises = listOfCities.map(async (value, index) => {
+        await parseWeather(value, URL, extensionOfOutput);
+    });
+
+    await Promise.all(promises);
+
+    console.log(ALL_TASKS_FINISHED);
 }
+
+launchParserInParallel();
