@@ -5,12 +5,12 @@ let internalFunctions = {
     createTimestamp: function () {
         return new Date().getTime();
     },
-    makeScreenshot: async function (page) {
+    makeScreenshot: async function (page, widthOfScreenshot, heightOfScreenshot) {
         // Options (https://github.com/GoogleChrome/puppeteer/blob/v1.17.0/docs/api.md#pagescreenshotoptions):
         // fullPage: true
         await page.screenshot({
             path: `screenshot-${internalFunctions.createTimestamp()}.png`,
-            clip: { x: 0, y: 0, width: 608, height: 624 }
+            clip: { x: 0, y: 0, width: widthOfScreenshot, height: heightOfScreenshot }
         });
     },
     makePDF: async function (page) {
@@ -52,14 +52,12 @@ module.exports = {
             return !!document.querySelectorAll(selector).length;
         }, { timeout: 10000 }, elements.join(', '));
     },
-    captureScreen: async function (page, extensionOutput) {
+    captureScreen: async function (page, extensionOfOutput, widthOfScreenshot, heightOfScreenshot) {
         // Create 'png' screenshot or 'pdf' screenprint
-        if (extensionOutput === 'png') {
-            await internalFunctions.makeScreenshot(page);
-        } else if (extensionOutput === 'pdf') {
+        if (extensionOfOutput === 'png') {
+            await internalFunctions.makeScreenshot(page, widthOfScreenshot, heightOfScreenshot);
+        } else if (extensionOfOutput === 'pdf') {
             await internalFunctions.makePDF(page);
-        } else {
-            console.info('\nSecond (optional) argument was not "png" or "pdf" or was not provided\n');
         }
     }
 

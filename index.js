@@ -7,6 +7,9 @@ const { cli } = require('./utils/cli.js');
 const WRONG_LIST_OF_CITIES = 'listOfCities should always be an array';
 const ALL_TASKS_FINISHED = '\nAll tasks finished!';
 
+const widthOfScreenshot = 608;
+const heightOfScreenshot = 624;
+
 async function parseWeather (city, url, extensionOfOutput) {
     const accuPage = require('./page_objects/accuweather.page.js');
 
@@ -84,7 +87,7 @@ async function parseWeather (city, url, extensionOfOutput) {
 
     await accuPage.scrapeAccuPageData(page);
 
-    await captureScreen(page, extensionOfOutput);
+    await captureScreen(page, extensionOfOutput, widthOfScreenshot, heightOfScreenshot);
 
     await browser.close();
 
