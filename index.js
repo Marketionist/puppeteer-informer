@@ -1,35 +1,10 @@
 'use strict';
 
 const puppeteer = require('puppeteer');
-const { clear, waitForVisible, waitForElements, makeScreenshot, makePDF } = require('./utils/helpers.js');
+const { clear, waitForVisible, waitForElements, captureScreen } = require('./utils/helpers.js');
+const { cli } = require('./utils/cli.js');
 
-const inputArguments = process.argv.slice(2);
-
-let listCities;
-
-// Check if --yes flag is provided to use default array of cities
-if (inputArguments.includes('--yes')) {
-    listCities = ['Málaga', 'Heraklion', 'Budva', 'Paphos', 'Amsterdam'];
-
-    // Check if process.env.CITY parameter with array of cities is set
-    if (process.env.CITY) {
-        listCities = process.env.CITY.split(',').map((value) => {
-            return value.trim();
-        });
-    }
-};
-
-// Check at what index the URL is provided
-let indexInputURL = inputArguments.map((value) => { return value.match(/^http/gi); })
-    .findIndex((value) => { return value == "http"; } );
-
-const extensionOutput = inputArguments[indexInputURL + 1];
-
-console.log(`\n====\ninputArguments: ${inputArguments}\nlistCities: ${listCities}\n` +
-    `extensionOutput: ${extensionOutput}\n====\n`);
-
-async function parseWeather (url) {
-
+async function parseWeather (listCities, url, extensionOutput) {
     const accuPage = require('./page_objects/accuweather.page.js');
 
     // Browser Display Statistics: https://www.w3schools.com/browsers/browsers_display.asp
@@ -106,24 +81,15 @@ async function parseWeather (url) {
 
     await accuPage.scrapeAccuPageData(page);
 
-    if (extensionOutput === 'png') {
-        await makeScreenshot(page);
-    } else if (extensionOutput === 'pdf') {
-        await makePDF(page);
-    } else {
-        console.info('\nSecond (optional) argument was not "png" or "pdf" or was not provided\n');
-    }
+    await captureScreen(page, extensionOutput);
 
     await browser.close();
 }
 
-if (indexInputURL !== -1) {
-    const url = inputArguments[indexInputURL];
+async function launchParser () {
+    let { listCities, URL, extensionOutput } = await cli(process.argv);
 
-    console.log('url: ', url);
-
-    parseWeather(url);
-} else {
-    throw new Error(`Please provide URL as a first argument and "png" or "pdf" as a second (optional) argument -
-        for example: \"node index.js https://www.accuweather.com/en/europe-weather png\"`);
+    await parseWeather(listCities, URL, extensionOutput);
 }
+
+launchParser();
