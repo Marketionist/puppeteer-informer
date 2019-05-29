@@ -4,7 +4,10 @@ const puppeteer = require('puppeteer');
 const { clear, waitForVisible, waitForElements, captureScreen } = require('./utils/helpers.js');
 const { cli } = require('./utils/cli.js');
 
-async function parseWeather (listCities, url, extensionOutput) {
+const WRONG_LIST_OF_CITIES = 'listOfCities should always be an array';
+const ALL_TASKS_FINISHED = '\nAll tasks finished!';
+
+async function parseWeather (city, url, extensionOfOutput) {
     const accuPage = require('./page_objects/accuweather.page.js');
 
     // Browser Display Statistics: https://www.w3schools.com/browsers/browsers_display.asp
@@ -51,7 +54,7 @@ async function parseWeather (listCities, url, extensionOutput) {
 
     await page.click(accuPage.inputSearch);
     await clear(page, accuPage.inputSearch);
-    await page.type(accuPage.inputSearch, listCities[0]);
+    await page.type(accuPage.inputSearch, city);
     await page.click(accuPage.buttonGo);
 
     await page.reload(url);
@@ -81,15 +84,30 @@ async function parseWeather (listCities, url, extensionOutput) {
 
     await accuPage.scrapeAccuPageData(page);
 
-    await captureScreen(page, extensionOutput);
+    await captureScreen(page, extensionOfOutput);
 
     await browser.close();
+
+    return city;
 }
 
-async function launchParser () {
-    let { listCities, URL, extensionOutput } = await cli(process.argv);
+async function launchParserInParallel () {
+    let { listOfCities, URL, extensionOfOutput } = await cli(process.argv);
 
-    await parseWeather(listCities, URL, extensionOutput);
+    // console.log(`\nArguments in launchParser:\n` +
+    //     `listOfCities: ${listOfCities}\nURL: ${URL}\nextensionOfOutput: ${extensionOfOutput}`);
+
+    if (!Array.isArray(listOfCities)) {
+        throw new Error(WRONG_LIST_OF_CITIES);
+    }
+
+    let promises = listOfCities.map(async (value, index) => {
+        await parseWeather(value, URL, extensionOfOutput);
+    });
+
+    await Promise.all(promises);
+
+    console.log(ALL_TASKS_FINISHED);
 }
 
-launchParser();
+launchParserInParallel();
