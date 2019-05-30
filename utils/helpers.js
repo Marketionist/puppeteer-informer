@@ -31,9 +31,9 @@ module.exports = {
         //     document.querySelector(selector).value = "";
         // }, selector);
         const inputValueLength = await page.evaluate((selector) => {
-            return (document.querySelector(selector).value.length);
+            return document.querySelector(selector).value.length;
         }, element);
-    
+
         for (let i = 0; i < inputValueLength; i++) {
             await page.keyboard.press('Backspace');
         }
