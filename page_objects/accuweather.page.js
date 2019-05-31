@@ -137,7 +137,7 @@ module.exports = (function () {
         await waitForVisible(page, accuweatherPage.linkExtended);
         await page.click(accuweatherPage.linkExtended);
         await waitForVisible(page, accuweatherPage.blockCurrentCity);
-    
+
         await accuweatherPage.scrapeAccuPageData(page);
 
         await captureScreen(page, extensionOfOutput, widthOfScreenshot, heightOfScreenshot);

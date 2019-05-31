@@ -41,9 +41,11 @@ module.exports = {
     waitForVisible: async function (page, element) {
         // Wait until element is displayed and "visibility" not hidden
         await page.waitForFunction((selector) => {
-            return (document.querySelector(selector) &&
+            let result = document.querySelector(selector) &&
                 document.querySelector(selector).clientHeight !== 0 &&
-                document.querySelector(selector).style.visibility !== 'hidden')
+                document.querySelector(selector).style.visibility !== 'hidden';
+
+            return result;
         }, {}, element);
     },
     waitForElements: async function (page, ...elements) {

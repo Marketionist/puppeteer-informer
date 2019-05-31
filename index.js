@@ -6,6 +6,9 @@ const accuPage = require('./page_objects/accuweather.page.js');
 const WRONG_LIST_OF_CITIES = 'listOfCities should always be an array';
 const ALL_TASKS_FINISHED = '\nAll tasks finished!';
 
+/**
+ * Launches parsing with tasks executing in parallel.
+ */
 async function launchParserInParallel () {
     let { listOfCities, URL, extensionOfOutput } = await cli(process.argv);
 
@@ -25,6 +28,9 @@ async function launchParserInParallel () {
     console.log(ALL_TASKS_FINISHED);
 }
 
+/**
+ * Launches parsing with tasks executing in order.
+ */
 async function launchParserInOrder () {
     let { listOfCities, URL, extensionOfOutput } = await cli(process.argv);
 
