@@ -8,6 +8,11 @@ const WRONG_ARGUMENTS = `Please provide:
         For example: \"node index.js https://www.accuweather.com/en/europe-weather png\"`;
 const RECEIVED_TASKS = '\nReceived %d task(s): [%s]. Please wait while executing...\n';
 
+/**
+ * Parses raw arguments provided when launching index.js.
+ * @param {Array.<string>} rawArgs Raw arguments provided while launching index.js.
+ * @returns {Object} Options parsed from raw arguments.
+ */
 function parseArgumentsIntoOptions (rawArgs) {
     const listOfInputArguments = rawArgs.slice(2);
 
@@ -23,8 +28,6 @@ function parseArgumentsIntoOptions (rawArgs) {
     if (process.env.CITY) {
         listOfCities = process.env.CITY.split(',').map((value) => { return value.trim(); });
     }
-
-    console.log(RECEIVED_TASKS, listOfCities.length, listOfCities);
 
     // Check at what index the URL is provided
     let indexInputURL = listOfInputArguments.map((value) => { return value.match(/^http/gi); }).findIndex((value) => {
@@ -64,6 +67,11 @@ function parseArgumentsIntoOptions (rawArgs) {
     };
 }
 
+/**
+ * Prompts user for missing options.
+ * @param {Object} options Current options provided while launching index.js.
+ * @returns {Object} Options extended from user's input.
+ */
 async function promptForMissingOptions (options) {
     if (options.skipPrompts) {
         // console.log('Using default options in promptForMissingOptions:', options);
@@ -122,6 +130,7 @@ module.exports = {
 
         options = await promptForMissingOptions(options);
 
+        console.log(RECEIVED_TASKS, options.listOfCities.length, options.listOfCities);
         // console.log('\nOptions in cli:', options);
 
         return options;

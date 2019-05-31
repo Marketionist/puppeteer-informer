@@ -1,12 +1,13 @@
 {
   "name": "puppeteer-informer",
-  "version": "0.0.1",
-  "description": "Puppeteer Informer is a Node.js script which provides a way to scrape information from any website using Chrome or Chromium",
+  "version": "0.0.2",
+  "description": "Puppeteer Informer is a Node.js script that scrapes information from a provided website using Chrome or Chromium",
   "main": "index.js",
   "engines": {
     "node": ">=8.x.x"
   },
   "scripts": {
+    "lint": "node_modules/.bin/eslint *.js **/*.js",
     "patch": "npm version patch -m \"Bumped up package version to %s\" && git push && git push origin --tags && npm publish",
     "minor": "npm version minor -m \"Bumped up package version to %s\" && git push && git push origin --tags && npm publish",
     "major": "npm version major -m \"Bumped up package version to %s\" && git push && git push origin --tags && npm publish"
@@ -36,5 +37,8 @@
   "dependencies": {
     "prompts": "^2.1.0",
     "puppeteer": "^1.17.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0"
   }
 }
