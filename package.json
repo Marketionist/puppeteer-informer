@@ -1,6 +1,6 @@
 {
   "name": "puppeteer-informer",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "description": "Puppeteer Informer is a Node.js script that scrapes information from a provided website using Chrome or Chromium",
   "main": "index.js",
   "engines": {
