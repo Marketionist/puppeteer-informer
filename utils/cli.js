@@ -6,7 +6,7 @@ const WRONG_ARGUMENTS = `Please provide:
         - URL as a first argument
         - "png" or "pdf" as a second (optional) argument
         For example: \"node index.js https://www.accuweather.com/en/europe-weather png\"`;
-const RECEIVED_TASKS = '\nReceived %d task(s): [%s]. Please wait while executing...\n';
+const RECEIVED_TASKS = '\nReceived %d task(s): %s. Please wait while executing...\n';
 
 /**
  * Parses raw arguments provided when launching index.js.
